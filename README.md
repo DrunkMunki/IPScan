@@ -132,7 +132,7 @@ Do **not** double-click a debug `ipscan.exe` unless Vite is running (`npm run ta
 
 ---
 
-## Build Windows installers
+## Build Windows packages
 
 ```bash
 npm install
@@ -143,11 +143,42 @@ Artifacts:
 
 | Path | What it is |
 |------|------------|
-| `src-tauri/target/release/ipscan.exe` | Standalone exe (UI embedded) |
-| `src-tauri/target/release/bundle/nsis/` | NSIS setup installer |
-| `src-tauri/target/release/bundle/msi/` | MSI installer |
+| `src-tauri/target/release/ipscan.exe` | Standalone / portable exe (UI embedded) |
+| `src-tauri/target/release/bundle/msi/` | Permanent MSI installer |
+
+**Portable locally:** zip the exe after a release build, e.g.:
+
+```powershell
+Compress-Archive -Path src-tauri\target\release\ipscan.exe -DestinationPath IPScan-portable.zip -Force
+```
 
 Always prefer `npm run tauri:build` for a runnable release binary.
+
+---
+
+## Releasing (GitHub)
+
+Releases are automated by [`.github/workflows/release.yml`](.github/workflows/release.yml):
+
+1. Bump the version in **both** `package.json` and `src-tauri/tauri.conf.json` (keep them identical).
+2. Commit, push to `main`, then tag and push the tag:
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+3. GitHub Actions will:
+   - Build the Windows **MSI** (permanent install)
+   - Create a GitHub Release with **auto-generated release notes** (from commits/PRs since the previous tag)
+   - Upload **`IPScan-portable-v*-windows-x64.zip`** (temporary / no install — extract and run)
+
+| Release asset | Use when |
+|---------------|----------|
+| `.msi` | Permanent install (Start Menu, Add/Remove Programs) |
+| `IPScan-portable-*.zip` | USB / one-off use — delete when done |
+
+Use clear commit messages (`feat: …`, `fix: …`) so the generated notes stay readable.
 
 ---
 
@@ -184,6 +215,7 @@ Misuse against systems without permission may be illegal.
 
 ```
 IPScan/
+├── .github/workflows/   # Release CI (MSI + portable ZIP)
 ├── src/                 # React UI (modes, results, Ping)
 ├── src-tauri/           # Rust backend (scan, ping, SQLite, Tauri commands)
 ├── screenshots/         # README screenshots

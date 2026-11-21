@@ -1,0 +1,73 @@
+name: Release
+
+# Push a version tag (e.g. v0.1.0) after bumping package.json + tauri.conf.json.
+# Builds the Windows MSI, creates a GitHub Release with auto-generated notes,
+# and uploads a portable ZIP (standalone ipscan.exe, no installer).
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build MSI and create GitHub Release
+        id: tauri
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: IPScan v__VERSION__
+          releaseBody: |
+            ## Downloads
+
+            | Asset | Use when |
+            |-------|----------|
+            | **`.msi`** | Permanent install (Start Menu, Add/Remove Programs) |
+            | **`IPScan-portable-*.zip`** | Temporary / portable — extract and run; no install |
+
+            See auto-generated notes below for what changed in this version.
+          generateReleaseNotes: true
+          releaseDraft: false
+          prerelease: false
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          $version = "${{ steps.tauri.outputs.appVersion }}"
+          if (-not $version) { $version = "${{ github.ref_name }}".TrimStart("v") }
+          $exe = "src-tauri/target/release/ipscan.exe"
+          if (-not (Test-Path $exe)) { throw "Missing $exe — Tauri build did not produce the binary." }
+          $zip = "IPScan-portable-v${version}-windows-x64.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path $exe -DestinationPath $zip -Force
+          "PORTABLE_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Created $zip"
+
+      - name: Upload portable ZIP to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          gh release upload "${{ github.ref_name }}" $env:PORTABLE_ZIP --clobber
