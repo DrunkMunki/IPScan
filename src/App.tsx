@@ -1200,7 +1200,7 @@ function App() {
             </div>
             <p className="hint">
               Saved in registry:{" "}
-              <span className="mono">HKCU\Software\Onyx\IPScan\AuditLogPath</span>
+              <span className="mono">HKCU\Software\IPScan\AuditLogPath</span>
             </p>
             <div className="actions" style={{ flexWrap: "wrap" }}>
               <button className="primary" type="button" onClick={() => void onOpenAuditLocation()}>

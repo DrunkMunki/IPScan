@@ -3,14 +3,15 @@
 use std::path::{Path, PathBuf};
 
 #[cfg(windows)]
-const REG_KEY: &str = r"Software\Onyx\IPScan";
+const REG_KEY: &str = r"Software\IPScan";
 #[cfg(windows)]
 const AUDIT_PATH_VALUE: &str = "AuditLogPath";
 
 /// Default audit log path under the user's app data directory.
 pub fn default_audit_path() -> Result<PathBuf, String> {
     let base = dirs::data_dir().ok_or_else(|| "Could not resolve app data directory.".to_string())?;
-    Ok(base.join("com.onyx.ipscan").join("audit.log"))
+    // %AppData%\ipscan\audit.log on Windows
+    Ok(base.join("ipscan").join("audit.log"))
 }
 
 /// Resolve the active audit log path (registry override, else default).

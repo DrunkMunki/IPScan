@@ -106,7 +106,7 @@ Browser-style tabs for continuous ICMP. Each tab records live replies, drop %, a
 - Live results, filters, risk notes (RDP/SMB/Telnet/FTP, …)
 - Saved scan profiles
 - CSV / JSON export
-- Local audit log (default `%AppData%\com.onyx.ipscan\audit.log`; path configurable via `HKCU\Software\Onyx\IPScan\AuditLogPath`)
+- Local audit log (default `%AppData%\ipscan\audit.log`; path configurable via `HKCU\Software\IPScan\AuditLogPath`)
 
 ---
 
@@ -154,31 +154,12 @@ Compress-Archive -Path src-tauri\target\release\ipscan.exe -DestinationPath IPSc
 
 Always prefer `npm run tauri:build` for a runnable release binary.
 
----
+Pre-built packages are on the GitHub **Releases** page:
 
-## Releasing (GitHub)
-
-Releases are automated by [`.github/workflows/release.yml`](.github/workflows/release.yml):
-
-1. Bump the version in **both** `package.json` and `src-tauri/tauri.conf.json` (keep them identical).
-2. Commit, push to `main`, then tag and push the tag:
-
-```powershell
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-3. GitHub Actions will:
-   - Build the Windows **MSI** (permanent install)
-   - Create a GitHub Release with **auto-generated release notes** (from commits/PRs since the previous tag)
-   - Upload **`IPScan-portable-v*-windows-x64.zip`** (temporary / no install — extract and run)
-
-| Release asset | Use when |
-|---------------|----------|
+| Asset | Use when |
+|-------|----------|
 | `.msi` | Permanent install (Start Menu, Add/Remove Programs) |
-| `IPScan-portable-*.zip` | USB / one-off use — delete when done |
-
-Use clear commit messages (`feat: …`, `fix: …`) so the generated notes stay readable.
+| `IPScan-portable-*.zip` | Temporary / portable — extract and run; no install |
 
 ---
 
@@ -187,8 +168,8 @@ Use clear commit messages (`feat: …`, `fix: …`) so the generated notes stay 
 | Data | Location |
 |------|----------|
 | Ping history / tabs | `%AppData%\ipscan\ping.db` |
-| Audit log (default) | `%AppData%\com.onyx.ipscan\audit.log` |
-| Audit path override | Registry `HKCU\Software\Onyx\IPScan\AuditLogPath` |
+| Audit log (default) | `%AppData%\ipscan\audit.log` |
+| Audit path override | `HKCU\Software\IPScan\AuditLogPath` |
 
 ---
 
@@ -215,7 +196,6 @@ Misuse against systems without permission may be illegal.
 
 ```
 IPScan/
-├── .github/workflows/   # Release CI (MSI + portable ZIP)
 ├── src/                 # React UI (modes, results, Ping)
 ├── src-tauri/           # Rust backend (scan, ping, SQLite, Tauri commands)
 ├── screenshots/         # README screenshots
@@ -226,4 +206,4 @@ IPScan/
 
 ## License
 
-Add a license of your choice before publishing (e.g. MIT). Until then, all rights reserved by the author unless otherwise stated.
+MIT — see [LICENSE](LICENSE).
