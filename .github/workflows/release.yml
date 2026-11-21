@@ -1,8 +1,8 @@
 name: Release
 
-# Push a version tag (e.g. v0.1.0) after bumping package.json + tauri.conf.json.
-# Builds the Windows MSI, creates a GitHub Release with auto-generated notes,
-# and uploads a portable ZIP (standalone ipscan.exe, no installer).
+# Push a version tag (e.g. v0.1.1) AFTER bumping package.json + tauri.conf.json
+# to the same version and committing. Builds Windows MSI, creates a GitHub
+# Release with auto-generated notes, and uploads a portable ZIP.
 
 on:
   push:
@@ -18,6 +18,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Verify tag matches app version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -notmatch '^v') { throw "Tag must start with v (got $tag)" }
+          $expected = $tag.Substring(1)
+          $pkg = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $tauri = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($pkg -ne $expected -or $tauri -ne $expected) {
+            throw @"
+Tag $tag must match the app version.
+  package.json          = $pkg
+  tauri.conf.json       = $tauri
+  expected (from tag)   = $expected
+
+Bump both version fields, commit, then create/push the tag.
+"@
+          }
+          Write-Host "OK: tag $tag matches app version $expected"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -37,8 +57,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: IPScan v__VERSION__
+          tagName: ${{ github.ref_name }}
+          releaseName: IPScan ${{ github.ref_name }}
           releaseBody: |
             ## Downloads
 
@@ -70,4 +90,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: |
+          # Always attach to the same tag that triggered this workflow
+          # (and that tauri-action used for the release).
           gh release upload "${{ github.ref_name }}" $env:PORTABLE_ZIP --clobber
