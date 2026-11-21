@@ -28,14 +28,7 @@ jobs:
           $pkg = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $tauri = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
           if ($pkg -ne $expected -or $tauri -ne $expected) {
-            throw @"
-Tag $tag must match the app version.
-  package.json          = $pkg
-  tauri.conf.json       = $tauri
-  expected (from tag)   = $expected
-
-Bump both version fields, commit, then create/push the tag.
-"@
+            throw "Tag $tag must match app version. package.json=$pkg tauri.conf.json=$tauri expected=$expected. Bump both files, commit, then tag."
           }
           Write-Host "OK: tag $tag matches app version $expected"
 
